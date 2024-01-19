@@ -1,5 +1,25 @@
 create database University
-use University
+use University2
+
+create table Role(
+roleId int not null identity(1,1),
+roleName varchar(30) not null primary key
+);
+select * from Role
+insert into Role values ('string')
+CREATE TABLE [Users] (
+    [user_id] INT IDENTITY(1,1) PRIMARY KEY,
+	name Varchar(5000) NOT NULL,
+	surname Varchar(500) not null,
+    username VARCHAR(255) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+	refreshToken varchar(500) not null,
+	tokenCreated datetime2 not null,
+	tokenExpires datetime2 not null,
+	roleName varchar(30) not null foreign key references Role(roleName),
+);
+
+
 
 CREATE TABLE University (
     university_id INT IDENTITY(1,1) PRIMARY KEY,
@@ -12,6 +32,13 @@ CREATE TABLE University (
     contact_phone VARCHAR(20), 
     accreditation_status VARCHAR(50), 
     ranking INT, 
+);
+
+Create table Management (
+	management_id int identity(1,1) Primary Key,
+	position varchar(255),
+	[user_id] int,
+	FOREIGN KEY ([user_id]) REFERENCES [Users]([user_id])
 );
 
 CREATE TABLE Department (
@@ -27,7 +54,6 @@ CREATE TABLE Department (
 );
 CREATE TABLE Teacher (
     teacher_id INT IDENTITY(1,1) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
     department_id INT,
     user_id INT,
     office_location VARCHAR(100), -- Office location of the teacher
@@ -66,7 +92,6 @@ CREATE TABLE Faculty (
 
 CREATE TABLE Student (
     student_id INT IDENTITY(1,1) PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
 	[user_id] INT,
 	date_of_birth DATE, -- Date of birth of the student
     gender CHAR(1), -- Gender of the student (M/F/O for Male/Female/Other)
@@ -100,24 +125,6 @@ CREATE TABLE Enrollment (
     course_id INT,
     FOREIGN KEY (student_id) REFERENCES Student(student_id),
     FOREIGN KEY (course_id) REFERENCES Course(course_id)
-);
-
-create table Role(
-roleId int not null identity(1,1),
-roleName varchar(30) not null primary key
-);
-select * from Role
-insert into Role values ('string')
-CREATE TABLE [Users] (
-    [user_id] INT IDENTITY(1,1) PRIMARY KEY,
-	name Varchar(5000) NOT NULL,
-	surname Varchar(500) not null,
-    username VARCHAR(255) NOT NULL,
-    password VARCHAR(255) NOT NULL,
-	refreshToken varchar(500) not null,
-	tokenCreated datetime2 not null,
-	tokenExpires datetime2 not null,
-	roleName varchar(30) not null foreign key references Role(roleName),
 );
 
 
