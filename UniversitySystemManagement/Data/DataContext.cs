@@ -11,6 +11,16 @@ namespace UniversityManagementSystem.Data
 
         public DbSet<Users> Users { get; set; }
         public DbSet<Role> Role { get; set; }
+        public DbSet<University> University { get; set; }
+        public DbSet<Department> Department { get; set; }
+        public DbSet<Management> Management { get; set; }
+        public DbSet<Faculty> Faculty { get; set; }
+        public DbSet<Course> Course { get; set; }
+        public DbSet<Student> Student { get; set; }
+        public DbSet<Schedule> Schedule { get; set; }
+        public DbSet<Room> Room { get; set; }
+        public DbSet<Teacher> Teacher { get; set; }
+        public DbSet<Enrollment> Enrollment { get; set; }
 
         //protected override void OnModelCreating(ModelBuilder modelBuilder)
         //{
