@@ -1,5 +1,5 @@
 create database University
-use University2
+use University
 
 create table Role(
 roleId int not null identity(1,1),
@@ -40,7 +40,8 @@ Create table Management (
 	[user_id] int,
 	FOREIGN KEY ([user_id]) REFERENCES [Users]([user_id])
 );
-
+alter table Management
+add university_id int foreign key references University(university_id)
 CREATE TABLE Department (
     department_id INT IDENTITY(1,1) PRIMARY KEY,
     university_id INT,
@@ -52,6 +53,7 @@ CREATE TABLE Department (
     contact_phone VARCHAR(20),
     FOREIGN KEY (university_id) REFERENCES University(university_id)
 );
+--po
 CREATE TABLE Teacher (
     teacher_id INT IDENTITY(1,1) PRIMARY KEY,
     department_id INT,
@@ -63,7 +65,7 @@ CREATE TABLE Teacher (
     FOREIGN KEY (department_id) REFERENCES Department(department_id),
     FOREIGN KEY (user_id) REFERENCES Users(user_id)
 );
-
+--po
 CREATE TABLE Course (
     course_id INT IDENTITY(1,1) PRIMARY KEY,
     department_id INT,
@@ -78,7 +80,7 @@ CREATE TABLE Course (
     FOREIGN KEY (teacher_id) REFERENCES Teacher(teacher_id)
 );
 
-
+--jo
 CREATE TABLE Faculty (
     faculty_id INT IDENTITY(1,1) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -89,8 +91,8 @@ CREATE TABLE Faculty (
     department_id INT,
     FOREIGN KEY (department_id) REFERENCES Department(department_id)
 );
-
-CREATE TABLE Student (
+--jo
+create TABLE Student (
     student_id INT IDENTITY(1,1) PRIMARY KEY,
 	[user_id] INT,
 	date_of_birth DATE, -- Date of birth of the student
@@ -100,7 +102,10 @@ CREATE TABLE Student (
     address VARCHAR(255), -- Address of the student
     FOREIGN KEY ([user_id]) REFERENCES [Users]([user_id])
 );
-
+alter table Student
+add department_id int foreign key references Department(department_id)
+select * from Student
+--po
 CREATE TABLE Room (
     room_number INT IDENTITY(1,1) PRIMARY KEY,
     capacity INT NOT NULL,
@@ -109,7 +114,7 @@ CREATE TABLE Room (
     floor_number INT, -- Floor number within the building
     room_type VARCHAR(50), -- Type of room (e.g., lecture hall, lab, office)
 );
-
+--po
 CREATE TABLE Schedule (
     schedule_id INT IDENTITY(1,1) PRIMARY KEY,
     course_id INT,
@@ -118,7 +123,7 @@ CREATE TABLE Schedule (
     FOREIGN KEY (course_id) REFERENCES Course(course_id),
     FOREIGN KEY (room_number) REFERENCES Room(room_number)
 );
-
+--po
 CREATE TABLE Enrollment (
     enrollment_id INT IDENTITY(1,1) PRIMARY KEY,
     student_id INT,
