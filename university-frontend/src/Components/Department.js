@@ -2,18 +2,17 @@ import React, { useState, useEffect } from 'react';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Button, Modal, Form } from 'react-bootstrap';
 
-const University = () => {
+const Department = () => {
+  const [departmentList, setDepartmentList] = useState([]);
   const [universityList, setUniversityList] = useState([]);
-  const [universityID, setUniversityID] = useState('');
+  const [departmentID, setDepartmentID] = useState('');
+  const [universityID, setUniversityID] = useState(''); // Added universityID
   const [name, setName] = useState('');
   const [abbreviation, setAbbreviation] = useState('');
+  const [headOfDepartment, setHeadOfDepartment] = useState('');
   const [establishedYear, setEstablishedYear] = useState('');
-  const [location, setLocation] = useState('');
-  const [websiteURL, setWebsiteURL] = useState('');
   const [contactEmail, setContactEmail] = useState('');
   const [contactPhone, setContactPhone] = useState('');
-  const [accreditationStatus, setAccreditationStatus] = useState('');
-  const [ranking, setRanking] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [modalTitle, setModalTitle] = useState('');
   const [modalAction, setModalAction] = useState('');
@@ -22,8 +21,16 @@ const University = () => {
   const [forceUpdate, setForceUpdate] = useState(false);
 
   useEffect(() => {
+    fetchDepartmentData();
     fetchUniversityData();
   }, [setForceUpdate]);
+
+  const fetchDepartmentData = () => {
+    fetch('https://localhost:7069/api/Department')
+      .then((response) => response.json())
+      .then((data) => setDepartmentList(data))
+      .catch((error) => console.log(error));
+  };
 
   const fetchUniversityData = () => {
     fetch('https://localhost:7069/api/University')
@@ -31,136 +38,121 @@ const University = () => {
       .then((data) => setUniversityList(data))
       .catch((error) => console.log(error));
   };
-
   const handleCloseModal = () => {
     setShowModal(false);
     setModalTitle('');
     setModalAction('');
-    setUniversityID('');
+    setDepartmentID('');
+    setUniversityID(''); // Reset universityID on modal close
     setName('');
     setAbbreviation('');
+    setHeadOfDepartment('');
     setEstablishedYear('');
-    setLocation('');
-    setWebsiteURL('');
     setContactEmail('');
     setContactPhone('');
-    setAccreditationStatus('');
-    setRanking('');
   };
 
   const handleShowCreateModal = () => {
     setShowModal(true);
-    setModalTitle('Create University');
+    setModalTitle('Create Department');
     setModalAction('create');
   };
 
-  const handleShowEditModal = (university) => {
+  const handleShowEditModal = (department) => {
     setShowModal(true);
-    setModalTitle('Edit University');
+    setModalTitle('Edit Department');
     setModalAction('edit');
-    setUniversityID(university.university_id);
-    setName(university.name);
-    setAbbreviation(university.abbreviation);
-    setEstablishedYear(university.established_year);
-    setLocation(university.location);
-    setWebsiteURL(university.website_url);
-    setContactEmail(university.contact_email);
-    setContactPhone(university.contact_phone);
-    setAccreditationStatus(university.accreditation_status);
-    setRanking(university.ranking);
+    setDepartmentID(department.department_id);
+    setUniversityID(department.university_id);
+    setName(department.name);
+    setAbbreviation(department.abbreviation);
+    setHeadOfDepartment(department.head_of_department);
+    setEstablishedYear(department.established_year);
+    setContactEmail(department.contact_email);
+    setContactPhone(department.contact_phone);
   };
 
   const handleCreate = () => {
     // Validation logic
-    if (!name || !abbreviation || !establishedYear || !location || !websiteURL || !contactEmail || !contactPhone || !accreditationStatus || !ranking) {
+    if (!universityID || !name || !abbreviation || !headOfDepartment || !establishedYear || !contactEmail || !contactPhone) {
       setError('Please fill in all fields.');
       return;
     }
-  
-    const newUniversity = {
+
+    const newDepartment = {
+      university_id: universityID,
       name: name,
       abbreviation: abbreviation,
+      head_of_department: headOfDepartment,
       established_year: establishedYear,
-      location: location,
-      website_url: websiteURL,
       contact_email: contactEmail,
       contact_phone: contactPhone,
-      accreditation_status: accreditationStatus,
-      ranking: ranking,
     };
-  
-    // Check if university with the same name already exists
-    const existingUniversity = universityList.find(u => u.name.toLowerCase() === newUniversity.name.toLowerCase());
-    if (existingUniversity) {
-      setError('A university with the same name already exists.');
+
+    // Check if department with the same name already exists
+    const existingDepartment = departmentList.find((d) => d.name.toLowerCase() === newDepartment.name.toLowerCase());
+    if (existingDepartment) {
+      setError('A department with the same name already exists.');
       return;
     }
-  
-    fetch('https://localhost:7069/api/University', {
+
+    fetch('https://localhost:7069/api/Department', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(newUniversity),
+      body: JSON.stringify(newDepartment),
     })
       .then((response) => response.json())
       .then(() => {
-        fetchUniversityData();
+        fetchDepartmentData();
         handleCloseModal();
       })
       .catch((error) => console.log(error));
   };
-  
+
   const handleUpdate = () => {
     // Validation logic
-    if (!name || !abbreviation || !establishedYear || !location || !websiteURL || !contactEmail || !contactPhone || !accreditationStatus || !ranking) {
+    if (!universityID || !name || !abbreviation || !headOfDepartment || !establishedYear || !contactEmail || !contactPhone) {
       setError('Please fill in all fields.');
       return;
     }
-  
-    const updateUniversity = {
+
+    const updateDepartment = {
+      department_id: departmentID,
       university_id: universityID,
       name: name,
       abbreviation: abbreviation,
+      head_of_department: headOfDepartment,
       established_year: parseInt(establishedYear),
-      location: location,
-      website_url: websiteURL,
       contact_email: contactEmail,
       contact_phone: contactPhone,
-      accreditation_status: accreditationStatus,
-      ranking: parseInt(ranking),
     };
-    
-    console.log(JSON.stringify(updateUniversity));
-    
-    fetch(`https://localhost:7069/api/University/${universityID}`, {
+
+    fetch(`https://localhost:7069/api/Department/${departmentID}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(updateUniversity),
+      body: JSON.stringify(updateDepartment),
     })
       .then((response) => {
-        console.log(response); // Log the full response object
-  
-        // Check if the response indicates an error
         if (!response.ok) {
-          // Handle the error here
-          setError('Failed to update the record. Please check the console for details.');
+          throw new Error('Failed to update the record. Please check the console for details.');
         } else {
-          // If successful, update the data and close the modal
-          fetchUniversityData();
+          fetchDepartmentData();
           handleCloseModal();
         }
       })
       .catch((error) => console.log(error));
   };
-  
-  
-  
-  
+
+  const handleForceUpdate = () => {
+    setForceUpdate((prev) => !prev);
+  };
+
   const handleDelete = (id) => {
-    fetch(`https://localhost:7069/api/University/${id}`, {
+    fetch(`https://localhost:7069/api/Department/${id}`, {
       method: 'DELETE',
     })
       .then((response) => {
@@ -180,80 +172,82 @@ const University = () => {
       })
       .then(() => {
         // Remove the deleted university from the state
-        setUniversityList((prevList) => prevList.filter((university) => university.university_id !== id));
+        setDepartmentList((prevList) => prevList.filter((department) => department.department_id !== id));
       })
       .catch((error) => console.log(error));
   };
-  
-  
-  
   const handleSearch = (e) => {
     const searchValue = e.target.value.toLowerCase();
     setSearchText(searchValue);
   };
-  
 
-  const filteredUniversityList = searchText
-    ? universityList.filter((university) => university.university_id.toString().includes(searchText))
-    : universityList;
+  const filteredDepartmentList = searchText
+    ? departmentList.filter((department) => department.department_id.toString().includes(searchText))
+    : departmentList;
 
   return (
-    <div className="container mt-5" style={{marginLeft:'-5vw'}}>
-    <h3>University</h3>
+    <div className="container mt-5" style={{ marginLeft: '-5vw' }}>
+      <h3>Department</h3>
       <div className="mb-3">
         <input
           type="text"
-          placeholder="Search by University ID"
+          placeholder="Search by Department ID"
           value={searchText}
           onChange={handleSearch}
           className="form-control"
         />
       </div>
       <button className="btn btn-primary mb-3" onClick={handleShowCreateModal}>
-        Create University
+        Create Department
       </button>
 
-      <h2>University List</h2>
+      <h2>Department List</h2>
       <div className="table-container">
         <table className="table">
           <thead>
             <tr>
-              <th>University ID</th>
+              <th>Department ID</th>
+              <th>University</th>
               <th>Name</th>
               <th>Abbreviation</th>
+              <th>Head of Department</th>
               <th>Established Year</th>
-              <th>Location</th>
-              <th>Website URL</th>
               <th>Contact Email</th>
               <th>Contact Phone</th>
-              <th>Accreditation Status</th>
-              <th>Ranking</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {filteredUniversityList.map((university) => (
-              <tr key={university.university_id}>
-                <td>{university.university_id}</td>
-                <td>{university.name}</td>
-                <td>{university.abbreviation}</td>
-                <td>{university.established_year}</td>
-                <td>{university.location}</td>
-                <td>{university.website_url}</td>
-                <td>{university.contact_email}</td>
-                <td>{university.contact_phone}</td>
-                <td>{university.accreditation_status}</td>
-                <td>{university.ranking}</td>
-                <td>
-                  <button className="btn btn-primary btn-sm" onClick={() => handleShowEditModal(university)}>
-                    Edit
-                  </button>
-                  <button className="btn btn-danger btn-sm ml-2" onClick={() => handleDelete(university.university_id)}>
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
+          {filteredDepartmentList.map((department) => {
+    // Find the corresponding university for the current department
+    const correspondingUniversity = universityList.find(
+      (university) => university.university_id === department.university_id
+    );
+
+    return (
+      <tr key={department.department_id}>
+        <td>{department.department_id}</td>
+        <td>{correspondingUniversity ? correspondingUniversity.name : ''}</td>
+        <td>{department.name}</td>
+        <td>{department.abbreviation}</td>
+        <td>{department.head_of_department}</td>
+        <td>{department.established_year}</td>
+        <td>{department.contact_email}</td>
+        <td>{department.contact_phone}</td>
+        <td>
+          <button className="btn btn-primary btn-sm" onClick={() => handleShowEditModal(department)}>
+            Edit
+          </button>
+          <button
+            className="btn btn-danger btn-sm ml-2"
+            onClick={() => handleDelete(department.department_id)}
+          >
+            Delete
+          </button>
+        </td>
+      </tr>
+    );
+  })}
           </tbody>
         </table>
       </div>
@@ -265,7 +259,18 @@ const University = () => {
         <Modal.Body>
           {error && <p className="text-danger">{error}</p>}
           <Form>
-            
+          <Form.Group controlId="universityID">
+              <Form.Label>University ID:</Form.Label>
+              <Form.Control as="select" value={universityID} onChange={(e) => setUniversityID(e.target.value)}>
+                <option value="">Select University</option>
+                {universityList.map((university) => (
+                  <option key={university.university_id} value={university.university_id}>
+                    {university.name}
+                  </option>
+                ))}
+              </Form.Control>
+            </Form.Group>
+
             <Form.Group controlId="name">
               <Form.Label>Name:</Form.Label>
               <Form.Control type="text" value={name} onChange={(e) => setName(e.target.value)} />
@@ -276,23 +281,14 @@ const University = () => {
               <Form.Control type="text" value={abbreviation} onChange={(e) => setAbbreviation(e.target.value)} />
             </Form.Group>
 
+            <Form.Group controlId="headOfDepartment">
+              <Form.Label>Head of Department:</Form.Label>
+              <Form.Control type="text" value={headOfDepartment} onChange={(e) => setHeadOfDepartment(e.target.value)} />
+            </Form.Group>
+
             <Form.Group controlId="establishedYear">
               <Form.Label>Established Year:</Form.Label>
-              <Form.Control
-                type="number"
-                value={establishedYear}
-                onChange={(e) => setEstablishedYear(e.target.value)}
-              />
-            </Form.Group>
-
-            <Form.Group controlId="location">
-              <Form.Label>Location:</Form.Label>
-              <Form.Control type="text" value={location} onChange={(e) => setLocation(e.target.value)} />
-            </Form.Group>
-
-            <Form.Group controlId="websiteURL">
-              <Form.Label>Website URL:</Form.Label>
-              <Form.Control type="text" value={websiteURL} onChange={(e) => setWebsiteURL(e.target.value)} />
+              <Form.Control type="number" value={establishedYear} onChange={(e) => setEstablishedYear(e.target.value)} />
             </Form.Group>
 
             <Form.Group controlId="contactEmail">
@@ -303,16 +299,6 @@ const University = () => {
             <Form.Group controlId="contactPhone">
               <Form.Label>Contact Phone:</Form.Label>
               <Form.Control type="text" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
-            </Form.Group>
-
-            <Form.Group controlId="accreditationStatus">
-              <Form.Label>Accreditation Status:</Form.Label>
-              <Form.Control type="text" value={accreditationStatus} onChange={(e) => setAccreditationStatus(e.target.value)} />
-            </Form.Group>
-
-            <Form.Group controlId="ranking">
-              <Form.Label>Ranking:</Form.Label>
-              <Form.Control type="number" value={ranking} onChange={(e) => setRanking(e.target.value)} />
             </Form.Group>
           </Form>
         </Modal.Body>
@@ -336,4 +322,4 @@ const University = () => {
   );
 };
 
-export default University;
+export default Department;
