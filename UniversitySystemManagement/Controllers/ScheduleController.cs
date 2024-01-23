@@ -1,13 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UniversityManagementSystem.Models;
 
 namespace UniversityManagementSystem.Controllers
 {
-    public class ScheduleController : Controller
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ScheduleController : ControllerBase
     {
         private readonly DataContext _context;
 
@@ -16,127 +18,81 @@ namespace UniversityManagementSystem.Controllers
             _context = context;
         }
 
-        // GET: Schedule
-        public async Task<IActionResult> Index()
+        // GET: api/Schedule
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Schedule>>> GetSchedules()
         {
-            var schedules = await _context.Schedule.ToListAsync();
-            return View(schedules);
+            return await _context.Schedule.ToListAsync();
         }
 
-        // GET: Schedule/Details/5
-        public async Task<IActionResult> Details(int? id)
+        // GET: api/Schedule/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Schedule>> GetSchedule(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var schedule = await _context.Schedule
-                .FirstOrDefaultAsync(m => m.schedule_id == id);
-            if (schedule == null)
-            {
-                return NotFound();
-            }
-
-            return View(schedule);
-        }
-
-        // GET: Schedule/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Schedule/Create
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("schedule_id,course_id,daytime,room_number")] Schedule schedule)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(schedule);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(schedule);
-        }
-
-        // GET: Schedule/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
             var schedule = await _context.Schedule.FindAsync(id);
+
             if (schedule == null)
             {
                 return NotFound();
             }
-            return View(schedule);
+
+            return schedule;
         }
 
-        // POST: Schedule/Edit/5
+        // POST: api/Schedule
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("schedule_id,course_id,daytime,room_number")] Schedule schedule)
+        public async Task<ActionResult<Schedule>> PostSchedule(Schedule schedule)
+        {
+            _context.Schedule.Add(schedule);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetSchedule), new { id = schedule.schedule_id }, schedule);
+        }
+
+        // PUT: api/Schedule/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> PutSchedule(int id, Schedule schedule)
         {
             if (id != schedule.schedule_id)
             {
-                return NotFound();
+                return BadRequest();
             }
 
-            if (ModelState.IsValid)
+            _context.Entry(schedule).State = EntityState.Modified;
+
+            try
             {
-                try
-                {
-                    _context.Update(schedule);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!ScheduleExists(schedule.schedule_id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
+                await _context.SaveChangesAsync();
             }
-            return View(schedule);
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!ScheduleExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // GET: Schedule/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // DELETE: api/Schedule/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSchedule(int id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var schedule = await _context.Schedule
-                .FirstOrDefaultAsync(m => m.schedule_id == id);
+            var schedule = await _context.Schedule.FindAsync(id);
             if (schedule == null)
             {
                 return NotFound();
             }
 
-            return View(schedule);
-        }
-
-        // POST: Schedule/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var schedule = await _context.Schedule.FindAsync(id);
             _context.Schedule.Remove(schedule);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return NoContent();
         }
 
         private bool ScheduleExists(int id)
