@@ -77,6 +77,29 @@ namespace UniversityManagementSystem.Controllers
         }
 
 
+        [HttpDelete("{id}")]
+        public async Task<ActionResult> DeleteUser(int id)
+        {
+            try
+            {
+                var user = await _context.Users.FindAsync(id);
+
+                if (user == null)
+                {
+                    return NotFound("User not found");
+                }
+
+                _context.Users.Remove(user);
+                await _context.SaveChangesAsync();
+
+                return Ok("User deleted successfully");
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to delete user: {ex.Message}");
+            }
+        }
+
 
         [HttpPost("login")]
         public async Task<ActionResult<object>> Login(LoginDto request)
@@ -95,7 +118,7 @@ namespace UniversityManagementSystem.Controllers
                 SetRefreshToken(refreshToken, dbUser); // Update the user's RefreshToken and token-related properties
                 await _context.SaveChangesAsync(); // Save changes to the database
 
-                var response = new { token, role = dbUser.roleName, user_id = dbUser.user_id }; // Include user_id in the response
+                var response = new { token, role = dbUser.roleName, userId = dbUser.user_id }; // Include user_id in the response
                 return Ok(response);
             }
             catch (Exception e)
@@ -186,66 +209,190 @@ namespace UniversityManagementSystem.Controllers
         }
 
 
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<Users>> GetUserById(int userId)
+        {
+            var user = await _context.Users
+                .Where(u => u.user_id == userId)
+                .FirstOrDefaultAsync();
 
-        [HttpGet("get-photo")]
-        public IActionResult GetPhotoByUrl(string profilePicture)
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return user;
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<Users>> EditUser(int id, EditUserDto request)
         {
             try
             {
-                // Validate the URL to ensure it's within the allowed paths
-                if (!profilePicture.StartsWith(_appSettings.Value.ImageStoragePath, StringComparison.OrdinalIgnoreCase))
+                var user = await _context.Users.FindAsync(id);
+
+                if (user == null)
                 {
-                    return BadRequest("Invalid image URL");
+                    return NotFound("User not found");
                 }
 
-                // Check if the file exists
-                if (!System.IO.File.Exists(profilePicture))
+                // Update user properties with the values from the request
+                user.username = request.UserName;
+                user.name = request.Name;
+                user.surname = request.Surname;
+                user.roleName = request.Role;
+
+                // Check if a new password is provided
+                if (!string.IsNullOrEmpty(request.Password))
                 {
-                    return NotFound("Image not found");
+                    // Hash the new password
+                    user.password = hashPassword(request.Password);
                 }
 
-                // Read the image file
-                var imageBytes = System.IO.File.ReadAllBytes(profilePicture);
+                // Save changes to the database
+                await _context.SaveChangesAsync();
 
-                // Determine the content type based on the file extension
-                var contentType = GetContentType(Path.GetExtension(profilePicture));
-
-                if (contentType == null)
-                {
-                    return BadRequest("Unsupported image format");
-                }
-
-                // Return the image as a file response
-                return File(imageBytes, contentType);
+                return Ok(user);
             }
             catch (Exception ex)
             {
-                // Handle any exceptions that may occur
-                return StatusCode(StatusCodes.Status500InternalServerError, "An error occurred: " + ex.Message);
+                return BadRequest($"Failed to edit user: {ex.Message}");
             }
         }
 
-
-        // ... (other actions in your PostController)
-
-        // Helper method to determine content type based on file extension
-        private string GetContentType(string fileExtension)
+        [HttpGet("teachers")]
+        public async Task<ActionResult<List<Users>>> GetTeachers()
         {
-            switch (fileExtension.ToLower())
-            {
-                case ".jpg":
-                case ".jpeg":
-                    return "image/jpeg";
-                case ".png":
-                    return "image/png";
-                case ".gif":
-                    return "image/gif";
-                // Add more supported image formats here
-                default:
-                    return null; // Unsupported format
-            }
+            var teachers = await _context.Users
+                .Where(u => u.roleName == "Teacher")
+                .ToListAsync();
+
+            return Ok(teachers);
         }
 
+        [HttpGet("students")]
+        public async Task<ActionResult<List<Users>>> GetStudents()
+        {
+            var teachers = await _context.Users
+                .Where(u => u.roleName == "Student")
+                .ToListAsync();
+
+            return Ok(teachers);
+        }
+
+        [HttpGet("Management")]
+        public async Task<ActionResult<List<Users>>> GetManagement()
+        {
+            var teachers = await _context.Users
+                .Where(u => u.roleName == "Management")
+                .ToListAsync();
+
+            return Ok(teachers);
+        }
+
+        [Authorize]
+        [HttpGet("getMyName")]
+        public ActionResult<string> GetMyName()
+        {
+            string myName = _userService.GetMyName();
+            return Ok(myName);
+        }
+
+        [Authorize]
+        [HttpGet("getUserDetails")]
+        public async Task<ActionResult<object>> GetUserDetails()
+        {
+            try
+            {
+                var loggedInUserId = int.Parse(User.FindFirstValue("user_id")); // Get the logged-in user's user_id
+
+                // Check if the user exists in the database
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.user_id == loggedInUserId);
+
+                if (user == null)
+                {
+                    return NotFound("User not found");
+                }
+
+                // Determine the user type based on the roleName
+                string userType = "";
+                object additionalAttributes = null;
+
+                switch (user.roleName)
+                {
+                    case "Student":
+                        var student = await _context.Student.FirstOrDefaultAsync(s => s.user_id == loggedInUserId);
+                        if (student != null)
+                        {
+                            // Additional properties specific to students
+                            userType = "Student";
+                            additionalAttributes = new
+                            {
+                                student.student_id,
+                                student.date_of_birth,
+                                student.gender,
+                                student.email,
+                                student.phone_number,
+                                student.address,
+                                student.department_id
+                                // Add other student-specific properties as needed
+                            };
+                        }
+                        break;
+
+                    case "Teacher":
+                        var teacher = await _context.Teacher.FirstOrDefaultAsync(t => t.user_id == loggedInUserId);
+                        if (teacher != null)
+                        {
+                            // Additional properties specific to teachers can be added here
+                            userType = "Teacher";
+                            additionalAttributes = new
+                            {
+                                teacher.teacher_id,
+                                teacher.department_id,
+                                teacher.academic_rank,
+                                teacher.office_location,
+                                teacher.office_hours,
+                                teacher.research_interests
+                            };
+                        }
+                        break;
+
+                    case "Management":
+                        var management = await _context.Management.FirstOrDefaultAsync(m => m.user_id == loggedInUserId);
+                        if (management != null)
+                        {
+                            // Additional properties specific to management can be added here
+                            userType = "Management";
+                            additionalAttributes = new
+                            {
+                                management.management_id,
+                                management.position,
+                                management.university_id
+                            };
+                        }
+                        break;
+                }
+
+                // You can customize the response based on the user type
+                var userDetails = new
+                {
+                    UserId = user.user_id,
+                    Username = user.username,
+                    Name = user.name,
+                    Surname = user.surname,
+                    UserType = userType,
+                    AdditionalAttributes = additionalAttributes // Additional attributes specific to the user type
+                                                                // Add other common properties as needed
+                };
+
+                return Ok(userDetails);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Failed to get user details: {ex.Message}");
+            }
+        }
 
 
     }
