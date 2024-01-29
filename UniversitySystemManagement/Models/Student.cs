@@ -24,6 +24,8 @@ namespace UniversityManagementSystem.Models
 
         [StringLength(255)]
         public string address { get; set; }
+
+        public int department_id { get; set; }
     }
 }
 
